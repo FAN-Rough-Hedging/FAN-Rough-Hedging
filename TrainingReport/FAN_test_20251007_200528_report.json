@@ -1,0 +1,41 @@
+{
+    "Time": "2025-10-07 20:05:28",
+    "Name": "FAN_test",
+    "Hyperparameters": {
+        "series_len": 128,
+        "hurst": 0.1,
+        "d_v": 256,
+        "d_emb": 256
+    },
+    "Dataset": {
+        "MODE": "stimulation",
+        "OPTION_TYPE": "euro",
+        "PATH": null,
+        "BATCH_SIZE": 1024
+    },
+    "Optimizer": {
+        "NAME": "AdamW",
+        "ARGS": {
+            "LR": 0.001,
+            "BETAS": [
+                0.9,
+                0.999
+            ]
+        },
+        "LR_SCHEDULER": {
+            "NAME": "StepLR",
+            "STEP_SIZE": 10,
+            "GAMMA": 0.98
+        },
+        "EPOCHS": 1000
+    },
+    "LR_scheduler": {
+        "NAME": "StepLR",
+        "STEP_SIZE": 10,
+        "GAMMA": 0.98
+    },
+    "Epochs": 1000,
+    "Batch Size": 1024,
+    "Validation Loss Mean": 2154.189208984375,
+    "Validation Loss Std": 9260.8857421875
+}

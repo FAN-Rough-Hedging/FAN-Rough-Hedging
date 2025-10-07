@@ -1,0 +1,12 @@
+# High-Frequency Option Hedging Simulation Dependencies
+python>=3.11.0
+torch>=2.1.0
+torchvision>=0.15.0
+numpy>=1.24.0
+pandas>=2.0.0
+sympy>=1.12
+matplotlib>=3.7.0
+tqdm>=4.65.0
+psutil>=5.9.0
+typing-extensions>=4.5.0
+
