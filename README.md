@@ -28,21 +28,11 @@ Our work introduces **FAN (Fractional Attention Network)**, a novel neural netwo
 2.  **Novel Architecture (FAN)**: We propose a Fractional Attention Network (FAN) that hard-codes this kernel as an inductive bias, enabling efficient learning of long-range, power-law dependencies that standard architectures struggle to capture.
 3.  **State-of-the-Art Performance**: We demonstrate that FAN achieves the theoretically tight Mean Square Hedge Error (MSHE) bound of `Θ(N^(2H-1))`, significantly outperforming existing benchmarks and closing the gap between theory and practice.
 
-### Repository Structure
+## Easy Access
 
-```
-.
-├── data/                      # Directory for storing generated datasets
-├── trained_models/            # Directory for storing trained model weights
-├── train.py                   # Main script to train models
-└── src/                       # All source code
-    ├── config.py              # Global parameters
-    ├── simulation/            # Rough volatility model simulator
-    ├── data_generation/       # Scripts to generate the training dataset
-    ├── benchmark/             # Malliavin weight-based "ground truth" delta
-    ├── models/                # FAN, baselines (LSTM, Transformer)
-    └── training/              # Dataset, loss functions, etc.
-```
+(training & validation) run main.py 
+(parameters modify) modify setting.py
+
 
 ### How to Replicate Our Results
 
