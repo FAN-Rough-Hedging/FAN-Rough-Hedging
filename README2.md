@@ -44,7 +44,12 @@ conda install pytorch torchvision numpy pandas matplotlib tqdm psutil sympy typi
 
 ## Quick Start
 
-1. Ensure datasets exist under `utils/dataset/` (files with `.pt`).
+1. Ensure datasets exist under `utils/dataset/` (files with `.pt`). If not, run follow file to get the dataset:
+
+```bash
+python utils/DataProcessor.py
+```
+   
 2. Run the entry script:
 
 ```bash
