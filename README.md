@@ -30,8 +30,9 @@ Our work introduces **FAN (Fractional Attention Network)**, a novel neural netwo
 
 ## Easy Access
 
-(training & validation) run main.py 
-(parameters modify) modify setting.py
+-(training & validation) run main.py 
+
+-(parameters modify) modify setting.py
 
 
 ### How to Replicate Our Results
