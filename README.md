@@ -1,3 +1,4 @@
+
 # FAN: Fractional Attention Networks for Optimal Hedging in Rough Volatility Models
 
 <p align="center">
@@ -7,7 +8,7 @@
 
 ---
 
-## English Version README
+## <a name="english-version-readme"></a>English Version README
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![arXiv](https://img.shields.io/badge/arXiv-24XX.XXXXX-b31b1b.svg)](https://arxiv.org/abs/24XX.XXXXX) <!-- TODO: Replace with your paper's arXiv link -->
@@ -17,7 +18,7 @@ This repository contains the official PyTorch implementation for the paper: **"F
 Our work introduces **FAN (Fractional Attention Network)**, a novel neural network architecture with a hard-coded inductive bias that captures the power-law memory inherent in rough volatility models. FAN achieves the theoretically optimal convergence rate for hedging error, demonstrating superior performance and sample efficiency compared to standard sequential models like LSTMs and Transformers.
 
 <p align="center">
-  <img src="assets/fan_architecture.png" width="700" alt="FAN Architecture Diagram"> 
+  <img src="assets/fan_architecture.png" width="700" alt="FAN Architecture Diagram">
   <br>
   <em>Figure 1: The architecture of our Fractional Attention Network (FAN), which incorporates a fixed power-law kernel.</em>
 </p>
@@ -28,58 +29,89 @@ Our work introduces **FAN (Fractional Attention Network)**, a novel neural netwo
 2.  **Novel Architecture (FAN)**: We propose a Fractional Attention Network (FAN) that hard-codes this kernel as an inductive bias, enabling efficient learning of long-range, power-law dependencies that standard architectures struggle to capture.
 3.  **State-of-the-Art Performance**: We demonstrate that FAN achieves the theoretically tight Mean Square Hedge Error (MSHE) bound of `Θ(N^(2H-1))`, significantly outperforming existing benchmarks and closing the gap between theory and practice.
 
-## Easy Access
+### Project Structure
 
-**(training & validation) run main.py**
+```
+.
+├── Loss_Plot/            # Loss curve plots (.pdf)
+├── Model_FAN/            # FAN model (fractal attention + feed-forward network)
+├── Trained_Model/        # Trained model weights (.pth)
+├── TrainingReport/       # Training reports (.json)
+├── compare_models_file/  # Benchmark models (LSTM / Transformer)
+├── utils/                # Data processing and training controller
+│   └── dataset/          # Prepared datasets (.pt files)
+├── main.py               # Entry script for training & validation
+├── setting.py            # Model & training configurations
+├── requirements.txt      # Project dependencies
+└── README.md             # Documentation
+```
 
-**(parameters modify) modify setting.py**
-
-
-### How to Replicate Our Results
+### Quick Start
 
 Follow these steps to set up the environment, generate the data, and train the models.
 
 #### Step 1: Installation
 
-Clone the repository and set up the Conda environment.
+Clone the repository and set up a virtual environment (Conda is recommended).
 
 ```bash
+# Clone the repository
 git clone https://github.com/your-username/FAN-Hedge.git
 cd FAN-Hedge
-# It's recommended to create a Conda or venv environment
-# conda create -n fan-hedge python=3.9
+
+# Create and activate a Conda environment
+# conda create -n fan-hedge python=3.11
 # conda activate fan-hedge
-pip install -r requirements.txt # Make sure to create a requirements.txt file
+
+# Install dependencies
+pip install -r requirements.txt
 ```
 
 #### Step 2: Data Generation
 
-This is the most time-consuming step. We use multiprocessing to generate the training dataset, which consists of market states (features) and their corresponding theoretically optimal deltas (labels) computed via MLQMC.
+This step generates the training dataset, which consists of market states (features) and their corresponding theoretically optimal deltas (labels). This can be time-consuming.
 
 ```bash
-# This command will use the parameters from src/config.py
-# It may take several hours depending on your machine and TOTAL_SAMPLES
-python -m src.data_generation.main
+# This command will use parameters from setting.py to generate dataset
+python utils/DataProcessor.py
 ```
-After completion, the `data/` directory will be populated with `delta_hedging_dataset_chunk_*.pkl` files.
+After completion, the `utils/dataset/` directory will be populated with `.pt` files.
 
 #### Step 3: Model Training
 
-Now, you can train the FAN model and the baseline models.
+Run the main script to start training. All configurations, such as model selection (FAN, LSTM, Transformer), learning rate, and epochs, are managed in `setting.py`.
 
-**Train our FAN Model:**
 ```bash
-python train.py --model FAN --lr 0.0001 --batch_size 256 --epochs 50
+# Modify settings in setting.py as needed, then run:
+python main.py
 ```
+The training process will:
+- Load configurations from `setting.py`.
+- Load a pre-trained model from `Trained_Model/` if it exists.
+- Run training and validation loops.
+- Save the trained model weights to `Trained_Model/`.
+- Generate a training report in `TrainingReport/`.
+- Save loss curve plots to `Loss_Plot/`.
 
-**Train the LSTM Baseline:**
-```bash
-python train.py --model LSTM --lr 0.0001 --batch_size 256 --epochs 50
-```
-Trained models will be saved in the `trained_models/` directory.
+### Configuration
 
-#### Step 4: Evaluation (Coming Soon)
-The `evaluate.py` script will load the trained models and generate the final plots and metrics presented in the paper, such as the MSHE convergence plot.
+All training and model parameters can be customized in **`setting.py`**:
+- **Model Selection**: `FAN_SETTING`, `LSTM_SETTING`, `VANILLAT_TRANSFORMER_SETTING`.
+- **Optimizer**: `Adam`, `AdamW`, `SGD`, etc., along with hyperparameters like `LR` and `WEIGHT_DECAY`.
+- **LR Scheduler**: `StepLR`, `CosineAnnealingLR`, etc.
+- **Training Hyperparameters**: `EPOCHS`, `BATCH_SIZE`.
+
+### Key Features
+
+- **Training Reports (JSON)**: After each run, a detailed JSON report is saved in `TrainingReport/`, containing hyperparameters, training time, and validation loss statistics.
+- **Loss Visualization**: Loss curves are automatically saved as PDF files in `Loss_Plot/` for easy analysis.
+- **Model Checkpointing**: Models are saved to `Trained_Model/` and can be loaded automatically to resume training or for evaluation.
+
+### FAQ
+
+- **Weight file not found**: Ensure the model filename in `Trained_Model/` matches the name specified in `setting.py`.
+- **GPU Out of Memory (OOM)**: Reduce `BATCH_SIZE` in `setting.py` or use a smaller dataset.
+- **"Trying to backward through the graph a second time"**: This error typically occurs with incorrect gradient handling. If you are implementing gradient accumulation, ensure you call `(loss / accumulation_steps).backward()` correctly and manage `optimizer.zero_grad()` and `optimizer.step()` timing.
 
 ### Citation
 
@@ -106,7 +138,7 @@ If you find our work useful, please cite our paper:
 我们的工作引入了 **FAN (分数注意力网络)**，这是一种新颖的神经网络架构。它通过硬编码的归纳偏置 (inductive bias) 来捕捉粗糙波动率模型中固有的幂律记忆特性。实验证明，FAN 能够达到理论上最优的对冲误差收敛速率，其性能和样本效率均显著优于 LSTM 和 Transformer 等标准序列模型。
 
 <p align="center">
-  <img src="assets/fan_architecture.png" width="700" alt="FAN 架构图"> 
+  <img src="assets/fan_architecture.png" width="700" alt="FAN 架构图">
   <br>
   <em>图 1: 我们的分数注意力网络 (FAN) 架构，其核心是集成了一个固定的幂律核。</em>
 </p>
@@ -117,67 +149,89 @@ If you find our work useful, please cite our paper:
 2.  **提出 FAN 架构**: 我们设计了一种分数注意力网络 (FAN)，将上述幂律核作为归纳偏置硬编码到模型中，使其能高效学习标准架构难以捕捉的长程幂律依赖关系。
 3.  **达到理论最优性能**: 我们证明了 FAN 能够达到理论上最紧的均方对冲误差 (MSHE) 界 `Θ(N^(2H-1))`，显著超越了现有基准模型，弥合了金融理论与深度学习实践之间的鸿沟。
 
-### 代码库结构
+### 项目结构
 
 ```
 .
-├── data/                      # 用于存放生成的数据集
-├── trained_models/            # 用于存放训练好的模型权重
-├── train.py                   # 训练模型的主脚本
-└── src/                       # 所有源代码
-    ├── config.py              # 全局配置文件
-    ├── simulation/            # 粗糙波动率模型模拟器
-    ├── data_generation/       # 生成训练数据集的脚本
-    ├── benchmark/             # 基于 Malliavin 权重的“真实” Delta 计算
-    ├── models/                # FAN 及基准模型 (LSTM, Transformer)
-    └── training/              # 数据集、损失函数等
+├── Loss_Plot/            # 损失曲线图 (.pdf)
+├── Model_FAN/            # FAN 模型 (分数注意力网络 + 前馈网络)
+├── Trained_Model/        # 训练好的模型权重 (.pth)
+├── TrainingReport/       # 训练报告 (.json)
+├── compare_models_file/  # 基准模型 (LSTM / Transformer)
+├── utils/                # 数据处理和训练控制器
+│   └── dataset/          # 准备好的数据集 (.pt 文件)
+├── main.py               # 训练与验证的入口脚本
+├── setting.py            # 模型与训练的配置文件
+├── requirements.txt      # 项目依赖
+└── README.md             # 项目文档
 ```
 
-### 如何复现我们的结果
+### 快速开始
 
 请遵循以下步骤来配置环境、生成数据并训练模型。
 
 #### 第 1 步：安装依赖
 
-克隆本代码库，并配置 Conda 环境。
+克隆本代码库，并配置虚拟环境（推荐使用 Conda）。
 
 ```bash
+# 克隆仓库
 git clone https://github.com/your-username/FAN-Hedge.git
 cd FAN-Hedge
-# 建议创建一个 Conda 或 venv 虚拟环境
-# conda create -n fan-hedge python=3.9
+
+# 创建并激活 Conda 环境
+# conda create -n fan-hedge python=3.11
 # conda activate fan-hedge
-pip install -r requirements.txt # 请确保创建 requirements.txt 文件
+
+# 安装依赖
+pip install -r requirements.txt
 ```
 
 #### 第 2 步：生成数据
 
-这是最耗时的一步。我们利用多进程并行生成训练数据集，其中包含市场状态（特征）和通过 MLQMC 方法计算出的理论最优 Delta（标签）。
+此步骤会生成训练所需的数据集，包含市场状态（特征）和对应的理论最优 Delta（标签），可能比较耗时。
 
 ```bash
-# 此命令将使用 src/config.py 中的参数
-# 根据您的机器性能和 TOTAL_SAMPLES 设置，可能需要数小时
-python -m src.data_generation.main
+# 此命令将使用 setting.py 中的参数生成数据集
+python utils/DataProcessor.py
 ```
-运行结束后，`data/` 目录下将生成 `delta_hedging_dataset_chunk_*.pkl` 文件。
+运行结束后，`utils/dataset/` 目录下将生成 `.pt` 数据文件。
 
 #### 第 3 步：训练模型
 
-现在，您可以开始训练 FAN 模型和基准模型。
+运行主脚本即可开始训练。所有配置项，如模型选择（FAN、LSTM、Transformer）、学习率、训练轮数等，均在 `setting.py` 文件中统一管理。
 
-**训练我们的 FAN 模型：**
 ```bash
-python train.py --model FAN --lr 0.0001 --batch_size 256 --epochs 50
+# 根据需要修改 setting.py 中的配置，然后运行：
+python main.py
 ```
+训练流程将自动完成以下任务：
+- 从 `setting.py` 加载配置。
+- 如果 `Trained_Model/` 目录下存在预训练模型，则加载权重。
+- 执行训练和验证循环。
+- 将训练好的模型权重保存到 `Trained_Model/`。
+- 在 `TrainingReport/` 目录中生成训练报告。
+- 在 `Loss_Plot/` 目录中保存损失曲线图。
 
-**训练 LSTM 基准模型：**
-```bash
-python train.py --model LSTM --lr 0.0001 --batch_size 256 --epochs 50
-```
-训练好的模型权重将保存在 `trained_models/` 目录下。
+### 参数配置
 
-#### 第 4 步：评估 (即将推出)
-`evaluate.py` 脚本将加载训练好的模型，并生成论文中展示的关键图表和指标，例如 MSHE 收敛速率图。
+所有的训练和模型参数都可以在 **`setting.py`** 文件中修改：
+- **模型选择**: `FAN_SETTING`, `LSTM_SETTING`, `VANILLAT_TRANSFORMER_SETTING`。
+- **优化器**: `Adam`, `AdamW`, `SGD` 等，以及 `LR` (学习率) 和 `WEIGHT_DECAY` (权重衰减) 等超参数。
+- **学习率调度器**: `StepLR`, `CosineAnnealingLR` 等。
+- **训练超参数**: `EPOCHS` (训练轮数), `BATCH_SIZE` (批大小)。
+
+### 主要功能
+
+- **训练报告 (JSON)**: 每次训练后，详细的 JSON 报告会保存在 `TrainingReport/` 中，记录了超参数、训练耗时和验证集损失统计信息。
+- **损失可视化**: 训练过程中的损失曲线会自动保存为 PDF 文件于 `Loss_Plot/` 目录，方便分析。
+- **模型断点续训**: 模型权重保存在 `Trained_Model/`，程序会自动加载已有权重，方便继续训练或进行评估。
+
+### 常见问题 (FAQ)
+
+- **找不到权重文件**: 请确保 `Trained_Model/` 中的模型文件名与 `setting.py` 中指定的名称一致。
+- **GPU 显存不足 (OOM)**: 在 `setting.py` 中减小 `BATCH_SIZE` 或使用规模更小的数据集。
+- **"Trying to backward through the graph a second time"**: 这个错误通常是由于不正确的梯度计算图操作导致。如果你在实现梯度累积，请确保正确调用 `(loss / accumulation_steps).backward()` 并控制好 `optimizer.zero_grad()` 和 `optimizer.step()` 的调用时机。
 
 ### 引用
 
@@ -190,4 +244,5 @@ python train.py --model LSTM --lr 0.0001 --batch_size 256 --epochs 50
   booktitle={Conference Name},
   year={2025}
 }
+```
 ```
