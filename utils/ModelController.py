@@ -5,8 +5,11 @@ import pandas as pd
 from typing import Optional
 from tqdm import tqdm
 import os
+import time
 
 DATASET_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dataset')
+ABS_FATHER_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 
 class ModelController(object):
 	def __init__(self,
@@ -48,7 +51,8 @@ class ModelController(object):
 		self, model:nn.Module, epochs:int=1,  batch_size:int=1000, 
 		Optimizer:torch.optim.Optimizer=None, lr_scheduler:torch.optim.lr_scheduler._LRScheduler=None
 	) -> (list, list, torch.nn.Module):
-	
+
+		time_start = time.time()
 		self.train_dataloader.setBatchSize(batch_size)
 		self.test_dataloader.setBatchSize(batch_size)
 
@@ -73,9 +77,11 @@ class ModelController(object):
 
 				idx = 0
 				for St, target_delta in self.train_dataloader:
+					St:torch.Tensor
+					target_delta:torch.Tensor
 					St = St.to(self.device)
 					pred_delta = model(St)
-					batch_loss = criterion(
+					batch_loss:torch.Tensor = criterion(
 							pred_delta=pred_delta, 
 							St=St, 
 							target_delta=target_delta.to(self.device)
@@ -89,7 +95,7 @@ class ModelController(object):
 					lr_scheduler.step()
 				self.train_dataloader.setBatchSize(
 					int(
-						((16-batch_size)*(epoch+1)+epochs*batch_size-16) / (epochs)
+						batch_size * (1/(epoch+1)) ** 0.35
 					)
 				)
 				training_loss.append(torch.mean(tmp_losses).detach().cpu().numpy())
@@ -111,6 +117,10 @@ class ModelController(object):
 
 				bar.set_description(
 					f'epoch:[{epoch+1}/{epochs}], train loss:[{training_loss[-1]}], test loss:[{testing_loss[-1]}]')
+				
+				# checkpoint
+				if epoch + 1 > epochs*0.5 and(epoch+1)%100==0:
+					torch.save(model.state_dict(), f'{ABS_FATHER_PATH}\\Trained_Model\\Checkpoint\\FAN{epoch+1}Epoch{int(training_loss[-1])}TrainLoss{int(testing_loss[-1])}TestLoss_time{time_start}.pth')
 
 
 		elif self.mode == 'real':
@@ -157,12 +167,15 @@ class ModelController(object):
 		model = model.to(self.device)
 		criterion = MSPE().to(self.device)
 		model.eval()
+		print(self.validation_dataloader.batch_size)
 		validation_losses = torch.zeros(self.validation_dataloader.__len__()).to(self.device)
 		with torch.no_grad():
 			idx = 0
 			delta_pair = []
 			if self.mode == 'stimulation':
 				for St, target_delta in self.validation_dataloader:
+					St:torch.Tensor
+					target_delta:torch.Tensor
 					St = St.to(self.device)
 					pred_delta = model(St)
 					validation_losses[idx] = criterion(
@@ -176,6 +189,7 @@ class ModelController(object):
 
 			elif self.mode == 'real':
 				for St in self.validation_dataloader:
+					St:torch.Tensor
 					St = St.to(self.device)
 					pred_delta = model(St)
 					validation_losses[idx] = criterion(pred_delta=pred_delta, St=St)
@@ -187,7 +201,7 @@ class ModelController(object):
 class MSPE(nn.Module):
 	def __init__(self):
 		super().__init__()
-
+	
 	def forward(self,
 				pred_delta:torch.Tensor,
 				target_delta:torch.Tensor,
@@ -198,20 +212,23 @@ class MSPE(nn.Module):
 				[torch.zeros(1).to(device), St[1:].detach()-St[:-1].detach()],
 				dim=0
 			)
-		return torch.mean(
+		loss1 = torch.mean(
 				torch.cumsum(
 					(pred_delta - target_delta) * dSt, dim=0)**2
 		)
+		loss2 = (pred_delta/torch.norm(pred_delta)) @ (target_delta/torch.norm(target_delta+1e-8)).view(-1,1)
+		return loss1 + loss2
 
+		
 
 class DataLoader(object):
 	def __init__(self, dataset:dict[str, list], mode:str, option_type:str='euro'):
 		assert option_type in ['euro', 'asia'], 'option_type must be "euro" or "asia"'
 		if mode == 'stimulation':
-			self.dataset = {'St':dataset['St'], 'delta':dataset['delta_dict'][option_type]}
+			self.dataset = {'St':dataset['St'].to('cuda'), 'delta':dataset['delta_dict'][option_type].to('cuda')}
 			length = len(self.dataset['St'])
 		else:
-			self.dataset = {'St':dataset['St']}
+			self.dataset = {'St':dataset['St']}.to('cuda')
 			length = len(self.dataset['St'])
 		index = np.arange(length)
 		np.random.shuffle(index)
@@ -242,7 +259,8 @@ class DataLoader(object):
 		return self.batch_size
 
 	def setBatchSize(self, batch_size):
-		self.batch_size = batch_size
+		if self.batch_size > batch_size:
+			self.batch_size = batch_size
 
 __all__ = ['ModelController']
 

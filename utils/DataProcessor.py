@@ -534,9 +534,9 @@ if __name__ == '__main__':
 	a = DataGenerator(
 		series_len=128, 
 		rou=-0.7, 
-		train_series_amount=4000, 
+		train_series_amount=9000, 
 		test_series_amount=500, 
-		validation_series_amount=500,
+		validation_series_amount=500, 
 		mcmc_num=10,
 		is_visualize=True
 	)
