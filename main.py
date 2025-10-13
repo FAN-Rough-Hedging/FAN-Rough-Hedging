@@ -56,7 +56,7 @@ class Train_Val_Pipeline(object):
                     self.lr_scheduler = self.getLrScheduler()
                     print('->-> lr scheduler init complete')
             
-            elif self.optimizer_setting['NAME'] in ['Adamax', 'adamax', 'ADAMAX']:
+            elif self.optimizer_setting['NAME'] in ['Adamax', 'adamax', 'ADAMAX', 'AdamMax', 'adamMax']:
                 self.optimizer = Adamax(
                     params=self.model.parameters(),
                     lr = args['LR'],
@@ -67,7 +67,7 @@ class Train_Val_Pipeline(object):
                     self.lr_scheduler = self.getLrScheduler()
                     print('->-> lr scheduler init complete')
             
-            elif self.optimizer_setting['NAME'] in ['SGD', 'sgd', 'SGD']:
+            elif self.optimizer_setting['NAME'] in ['SGD', 'sgd']:
                 self.optimizer = SGD(
                     params=self.model.parameters(),
                     lr = args['LR'],
@@ -158,7 +158,7 @@ class Train_Val_Pipeline(object):
                 Train_Val_Pipeline.optimizer_setting['LR_SCHEDULER']['T_0'], Train_Val_Pipeline.optimizer_setting['LR_SCHEDULER']['T_MULT'], and Train_Val_Pipeline.optimizer_setting['LR_SCHEDULER']['ETA_MIN'] must be set.
                 ''')
     
-    def run(self, continue_train=False, save_model_file_name:str='model.pth', is_plot:bool=True):
+    def run(self, continue_train=False, save_model_file_name:str='model', is_plot:bool=True):
         model = self.model
         if continue_train:
             model.load_state_dict(
@@ -189,16 +189,20 @@ class Train_Val_Pipeline(object):
             plt.show()
         
         self.model_report = self.modelReport(model = model, model_name = save_model_file_name)
+        print('validation complete!')
     
     def modelReport(self, model:nn.Module, model_name:str):
         model.eval()
         validation_loss_mean, validation_loss_std, delta_pair = self.model_controller.validationModel(model = model)
+        
+        
         
         for pair in delta_pair[:20]:
             plt.plot(pair[0].detach().cpu().numpy(), label='pred')
             plt.plot(pair[1].detach().cpu().numpy(), label='target')
             plt.legend()
             plt.show()
+        
 
 
         info = {
@@ -225,17 +229,17 @@ class Train_Val_Pipeline(object):
         # 保存JSON文件
         with open(json_filepath, 'w', encoding='utf-8') as f:
             json.dump(info, f, ensure_ascii=False, indent=4)
-        print(f"训练报告已保存至: {json_filepath}")
+        print(f"Save the report to: {json_filepath}")
         return info
         
 if __name__ == '__main__':
     # 训练加测试的代码
-    pipeline1 = Train_Val_Pipeline(model=FAN, model_setting=FAN_SETTING)
-    pipeline1.run(continue_train=False, save_model_file_name='FAN_test', is_plot=True)
+    #pipeline1 = Train_Val_Pipeline(model=FAN, model_setting=FAN_SETTING)
+    #pipeline1.run(continue_train=False, save_model_file_name='FAN_test', is_plot=True)
 
 
     # 不训练，只测试的代码
     pipeline1 = Train_Val_Pipeline(model=FAN, model_setting=FAN_SETTING)
-    pipeline1.model.load_state_dict(torch.load(f"{ABS_PATH}\\Trained_Model\\FAN_test.pth"), weights_only=True)
-    pipeline1.modelReport(model = pipeline1.model.to('cuda'), model_name = 'FAN_test')
+    pipeline1.model.load_state_dict(torch.load(f"{ABS_PATH}\\Trained_Model\\Checkpoint\\FAN10000Epoch26TrainLoss127TestLoss_time1760242091.8262339.pth", weights_only=True))
+    pipeline1.modelReport(model = pipeline1.model.to('cuda'), model_name = 'FAN5100Epoch44TrainLoss119TestLoss_time1760242091.8262339')
 
